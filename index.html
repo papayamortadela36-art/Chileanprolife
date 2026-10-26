@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="cpl-version" content="202610260842">
+<meta name="cpl-version" content="202610260845">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Chilean Pro Life</title>
 <meta name="description" content="Chilean Pro Life: elige entre la versión normal y el Fly Simulator.">
@@ -217,7 +217,8 @@ function gh(metodo,ruta,cuerpo,tok){return fetch(API+ruta,{method:metodo,headers
     if(!r.ok){var m=j&&j.message?j.message:("error "+r.status);if(r.status===401)m="La llave no sirve o venció (401)";if(r.status===403)m="La llave no tiene permiso para escribir (403): "+m;if(r.status===404)m="No encontré el repositorio o la llave no lo puede ver (404)";throw new Error(m);}
     return j;});});}
 function revisarRepo(repo,tok){return gh("GET","/repos/"+repo,null,tok).then(function(R){if(R.permissions&&!R.permissions.push)throw new Error("La llave solo puede leer: dale permiso «Contents: Read and write»");return {rama:R.default_branch,privado:R.private};});}
-function commitArchivos(lista,mensaje){var p="/repos/"+S.repo+"/git",cab;
+function commitArchivos(lista,mensaje,_n){_n=_n||0;return commitArchivos1(lista,mensaje).catch(function(e){if(_n<3&&/fast.?forward|not a fast/i.test(e.message||"")){return new Promise(function(ok){setTimeout(ok,1500);}).then(function(){return commitArchivos(lista,mensaje,_n+1);});}throw e;});}
+function commitArchivos1(lista,mensaje){var p="/repos/"+S.repo+"/git",cab;
   return gh("GET",p+"/ref/heads/"+encodeURIComponent(S.rama)).then(function(r){cab=r.object.sha;return gh("GET",p+"/commits/"+cab);})
     .then(function(c){return gh("POST",p+"/trees",{base_tree:c.tree.sha,tree:lista.map(function(x){return {path:x.ruta,mode:"100644",type:"blob",sha:x.sha};})});})
     .then(function(t){return gh("POST",p+"/commits",{message:mensaje,tree:t.sha,parents:[cab]});})
